@@ -84,7 +84,7 @@ class TableService:
             print(f"❌ Party size ({party_size}) is too large for Table {table_id} (Capacity: {table.capacity}).")
             return
 
-        # Delegate state change and messages to Table.occupy()
+     
         if table.occupy():
             self.save_tables()
 
@@ -93,6 +93,6 @@ class TableService:
         if table is None:
             return 
         
-        # Delegate state change and messages to Table.vacate()
+    
         if table.vacate():
             self.save_tables()

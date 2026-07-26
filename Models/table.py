@@ -1,9 +1,8 @@
 class Table:
-    def __init__(self, table_id, capacity) :
+    def __init__(self, table_id, capacity, is_occupied=False):
         self.table_id = table_id
         self.__capacity = capacity
-        self.__is_occupied = False
-
+        self.__is_occupied = is_occupied
 
     @property
     def capacity(self):
@@ -12,7 +11,10 @@ class Table:
     @property
     def is_occupied(self):
         return self.__is_occupied
-    
+
+    @is_occupied.setter
+    def is_occupied(self, value):
+        self.__is_occupied = value
 
     def occupy(self) :
         if self.__is_occupied:

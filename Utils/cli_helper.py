@@ -35,4 +35,3 @@ def display_auth_menu():
     print(f"{CYAN}│  [3] ❌ Exit Application              │{RESET}")
     print(f"{CYAN}└───────────────────────────────────────┘{RESET}")
 
-display_auth_menu()
