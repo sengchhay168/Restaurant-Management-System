@@ -39,22 +39,24 @@ class OrderService:
         total_price = 0.0
 
         for item in items:
-            item_id = item["item_id"]
             quantity = item["quantity"]
             
-            menu_item = self.menu_service.get_item(item_id)
-            if menu_item:
-                total_price += menu_item.price * quantity
-            
+            # Check if a custom price was passed, otherwise look it up or use a default $5.00 price
+            if "price" in item:
+                item_price = item["price"]
             else:
-                print("❌ Item not found!")
-                return False
+                item_id = item["item_id"]
+                menu_item = self.menu_service.get_item(item_id) if hasattr(self.menu_service, 'get_item') else None
+                item_price = menu_item.price if menu_item else 5.00
+            
+            total_price += item_price * quantity
             
         new_order = orders_cls(order_id, table_id, items, total_price=total_price)
         self.orders.append(new_order)
-        self._save_orders()
+        self._save_orders()  
         return True
 
+    
     def get_orders_by_table(self, table_id) :
         matching_orders = []
         for o in self.orders :
@@ -100,15 +102,22 @@ class OrderService:
         # 4. Loop through every item in every order
         for order in orders:
             for item in order.items:
-                item_id = item["item_id"]
                 quantity = item["quantity"]
                 
-                menu_item = self.menu_service.get_item(item_id)
+                # Check menu service first, otherwise use custom item_id and fallback price
+                item_id = item["item_id"]
+                menu_item = self.menu_service.get_item(item_id) if hasattr(self.menu_service, 'get_item') else None
+                
                 if menu_item:
-                    subtotal = menu_item.price * quantity
-                    grand_total += subtotal
-                    # Updated widths so every single line hits exactly 40 characters wide!
-                    print(f"{menu_item.name:<20}{quantity:<5}${menu_item.price:<6.2f}${subtotal:<7.2f}")
+                    name = menu_item.name
+                    price = menu_item.price
+                else:
+                    name = item_id  # Use the typed name (e.g., "Burger")
+                    price = item.get("price", 5.00)  # Use the saved price, or $5.00 default
+                
+                subtotal = price * quantity
+                grand_total += subtotal
+                print(f"{name:<20}{quantity:<5}${price:<6.2f}${subtotal:<7.2f}")
 
         # 5. Print the grand total footer (outside the loops!)
         print("-" * 40)
@@ -117,3 +126,12 @@ class OrderService:
 
         # 6. Pause screen
         input("\n{Press Enter to Go back to the main Menu}: ")
+
+    def update_order_status(self, order_id, new_status):
+            """Updates the status of an existing order and saves to JSON."""
+            for order in self.orders:
+                if order.order_id == order_id:
+                    order.status = new_status
+                    self._save_orders()  
+                    return True
+            return False

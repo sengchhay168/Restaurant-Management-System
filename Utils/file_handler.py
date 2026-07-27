@@ -29,7 +29,7 @@ class FileHandler :
             if folder_name :
                 os.makedirs(folder_name, exist_ok=True)
 
-            with open(file_path, "W", encoding='utf-8') as file:
+            with open(file_path, "w", encoding='utf-8') as file:
                 json.dump(data, file, indent=4)
             return True
         except :

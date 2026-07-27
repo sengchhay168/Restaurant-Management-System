@@ -1,7 +1,10 @@
-from Utils.cli_helper import display_menu, display_header, CYAN, RESET, display_auth_menu
+from Utils.cli_helper import display_menu, display_header, CYAN, RESET, display_auth_menu, order_menu
 from Services import auth_service, menu_service, order_service, table_service
+from Controller.order_controller import run_order_menu
+from Controller.menu_controller import run_menu_management
 import os
 import subprocess
+
 
 menu_svc = menu_service.MenuService()
 table_svc = table_service.TableService()
@@ -120,8 +123,15 @@ def main():
                     display_header("VACATE A TABLE")
                     table_id = input("Enter Table ID: ").strip()
                     table_svc.vacate_table(table_id)
-                
-                case "6" :
+
+                case "6":
+                    # 🍔 ORDER & BILLING SYSTEM INTEGRATION
+                    run_order_menu()
+
+                case "7":
+                    run_menu_management()
+                    
+                case "8" :
                     auth_svc.logout()
                     logged_in = False
                     break

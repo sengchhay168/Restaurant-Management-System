@@ -45,7 +45,6 @@ class MenuService:
     def get_all_items(self):
         """Returns the list of all menu items."""
         if not self.menu_items:
-            print("The menu is empty! There are no items to display.")
             return []  # Return an empty list so the program doesn't crash
         
         return self.menu_items

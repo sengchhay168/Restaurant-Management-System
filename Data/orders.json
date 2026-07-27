@@ -1,1 +1,28 @@
-[]
+[
+    {
+        "order_id": "ORDER1",
+        "table_id": "TABLE1",
+        "items": [
+            {
+                "item_id": "Burger",
+                "quantity": 7,
+                "price": 3.0
+            }
+        ],
+        "status": "Completed",
+        "total_price": 21.0
+    },
+    {
+        "order_id": "ORDER2",
+        "table_id": "TABLE1",
+        "items": [
+            {
+                "item_id": "pizza",
+                "quantity": 2,
+                "price": 10.0
+            }
+        ],
+        "status": "pending",
+        "total_price": 20.0
+    }
+]

@@ -1,1 +1,26 @@
-[]
+[
+    {
+        "item_id": "ITEM1",
+        "name": "Burger",
+        "category": "Food",
+        "price": 5.0
+    },
+    {
+        "item_id": "IEM2",
+        "name": "Pizza",
+        "category": "Food",
+        "price": 4.0
+    },
+    {
+        "item_id": "ITEM3",
+        "name": "Coca Cola",
+        "category": "Drink",
+        "price": 2.0
+    },
+    {
+        "item_id": "ITEM5",
+        "name": "Juice",
+        "category": "Drink",
+        "price": 0.5
+    }
+]

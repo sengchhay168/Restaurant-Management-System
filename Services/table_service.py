@@ -93,6 +93,14 @@ class TableService:
         if table is None:
             return 
         
-    
         if table.vacate():
             self.save_tables()
+
+    def update_order_status(self, order_id, new_status):
+        """Updates the status of an existing order and saves to JSON."""
+        for order in self.orders:
+            if order.order_id == order_id:
+                order.status = new_status
+                self.save_orders()  
+                return True
+        return False
