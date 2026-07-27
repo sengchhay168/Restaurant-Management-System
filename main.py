@@ -12,10 +12,8 @@ order_svc = order_service.OrderService(menu_svc, table_svc)
 auth_svc = auth_service.AuthService()
 
 
-
 def login_screen():
     while True:
-
         subprocess.run('cls' if os.name == 'nt' else 'clear', shell=True)
 
         display_auth_menu()  
@@ -32,7 +30,6 @@ def login_screen():
                     input(f"{CYAN}Press Enter to go to the main menu...{RESET}")
                     return True
                 else:
-                    # 💡 Pause here so you can read the invalid username/password error!
                     print("\n❌ Login failed! Incorrect username or password.")
                     input(f"{CYAN}Press Enter to try again...{RESET}")
                 
@@ -60,84 +57,104 @@ def login_screen():
 def main():
     while True:
         if not login_screen():
-           break
-     
+            break
 
         logged_in = True
         while logged_in:
             display_menu()
 
-        # Get user selection with styled input prompt
-            choice = input(f"\n{CYAN}👉 Select an option (1-6): {RESET}").strip()
+            choice = input(f"\n{CYAN}👉 Select an option (1-8): {RESET}").strip()
             
             match choice:
-                case "1" :
-
+                case "1":
                     display_header("ADD NEW TABLE")
                     table_id = input("Enter Table ID:").strip()
+                    if not table_id:
+                        print("❌ Table ID cannot be empty!")
+                    else:
+                        try:
+                            capacity = int(input("Enter the amount of seats: ").strip())
+                            if capacity <= 0:
+                                print("❌ Capacity must be greater than 0!")
+                            else:
+                                table_svc.add_table(table_id, capacity)
+                        except ValueError:
+                            print("❌ Invalid input! Capacity must be a number.")
 
-                    try :
-                        capacity = int(input("Enter the ammount of seats:").strip())
-                        table_svc.add_table(table_id, capacity)
-                    except ValueError :
-                        print("❌ Invalid input! Capacity must be a number.")
+                    input(f"\n{CYAN}Press Enter to continue...{RESET}")
                 
                 case "2":
                     display_header("FIND TABLE DETAILS")
                     table_id = input("Enter table ID: ").strip()
-                    table = table_svc.find_table(table_id)
-            
-                    if table:
-                        print(table.get_details())
+                    if not table_id:
+                        print("❌ Table ID cannot be empty!")
+                    else:
+                        table = table_svc.find_table(table_id)
+                        if table:
+                            print(table.get_details())
 
-                case "3" :
+                    input(f"\n{CYAN}Press Enter to continue...{RESET}")
 
+                case "3":
                     display_header("SHOW AVAILABLE TABLE")
-                    try :
+                    try:
                         party_size = int(input("Enter the ammount of people :").strip())
-                        available_tables = table_svc.get_available_tables(party_size)
-                        
-                        if available_tables :
-                            for a in available_tables :
-                                print(f"Table ID: {a.table_id} | Capacity: {a.capacity}")
-                        else :
-                            print("No available tables found for that party size.")
-
-                    except ValueError :
+                        if party_size <= 0:
+                            print("❌ Party size must be greater than 0!")
+                        else:
+                            available_tables = table_svc.get_available_tables(party_size)
+                            if available_tables:
+                                for a in available_tables:
+                                    print(f"Table ID: {a.table_id} | Capacity: {a.capacity}")
+                            else:
+                                print("No available tables found for that party size.")
+                    except ValueError:
                         print("❌ Invalid input! ammount of people must be a number.")
-                    
-                    
-                case "4" :
 
+                    input(f"\n{CYAN}Press Enter to continue...{RESET}")
+                    
+                case "4":
                     display_header("OCCUPY A TABLE")
                     table_id = input("Enter Table ID: ").strip()
+                    if not table_id:
+                        print("❌ Table ID cannot be empty!")
+                    else:
+                        try:
+                            party_size = int(input("Enter the ammount of people: ").strip())
+                            if party_size <= 0:
+                                print("❌ Party size must be greater than 0!")
+                            else:
+                                table_svc.occupy_table(table_id, party_size)
+                        except ValueError:
+                            print("❌ Invalid input! ammount of people must be a number.")
 
-                    try :
-                        party_size = int(input("Enter the ammount of people: ").strip())
-                        table_svc.occupy_table(table_id, party_size)
-                    except ValueError :
-                        print("❌ Invalid input! ammount of people must be a number.")
+                    input(f"\n{CYAN}Press Enter to continue...{RESET}")
 
-                case "5" :
-
+                case "5":
                     display_header("VACATE A TABLE")
                     table_id = input("Enter Table ID: ").strip()
-                    table_svc.vacate_table(table_id)
+                    if not table_id:
+                        print("❌ Table ID cannot be empty!")
+                    else:
+                        table_svc.vacate_table(table_id)
+
+                    input(f"\n{CYAN}Press Enter to continue...{RESET}")
 
                 case "6":
-                    # 🍔 ORDER & BILLING SYSTEM INTEGRATION
-                    run_order_menu()
+                    run_order_menu(order_svc, menu_svc)
 
                 case "7":
-                    run_menu_management()
+                    run_menu_management(menu_svc)
                     
-                case "8" :
+                case "8":
                     auth_svc.logout()
                     logged_in = False
                     break
 
                 case _:
                     print("❌ Invalid choice! Please select a valid option from the menu.")
+                    input(f"\n{CYAN}Press Enter to continue...{RESET}")
+
 
 if __name__ == "__main__":
-   main()
+    main()
