@@ -6,12 +6,6 @@
         "price": 5.0
     },
     {
-        "item_id": "IEM2",
-        "name": "Pizza",
-        "category": "Food",
-        "price": 4.0
-    },
-    {
         "item_id": "ITEM3",
         "name": "Coca Cola",
         "category": "Drink",
@@ -22,5 +16,17 @@
         "name": "Juice",
         "category": "Drink",
         "price": 0.5
+    },
+    {
+        "item_id": "ITEM4",
+        "name": "Pasta",
+        "category": "Food",
+        "price": 2.0
+    },
+    {
+        "item_id": "ITEM2",
+        "name": "Pizza",
+        "category": "Food",
+        "price": 5.0
     }
 ]
