@@ -14,12 +14,11 @@ A Python CLI application designed for managing restaurant seating, user authenti
 
 ---
 
-## ✨ Features
-- **Authentication System**: Secure user registration and login with role-based options (admin / staff).
-- **Data Persistence**: Automatic saving and loading of system data via JSON files.
-- **Table Management**: View table availability and handle table assignments.
-- **Menu & Order Handling**: Manage menu items and customer order workflows.
-
+## Features
+- **User Authentication:** Multi-role support (`admin` and `staff`).
+- **Access Control:** Restricted menu management for non-admin users.
+- **Table & Order Management:** Assign tables, create orders, track statuses.
+- **Receipt & Billing:** Automated calculation of subtotal, customizable discount %, and tax.
 ---
 
 ## 📁 Project Structure
@@ -27,6 +26,7 @@ A Python CLI application designed for managing restaurant seating, user authenti
 ```text
 RESTAURANT SYSTEM/
 │
+├── Controller/           # CLI controllers & user flow logic (menu, order)
 ├── Data/                 # Stored JSON files (users, tables, menu, orders)
 │   ├── menu.json
 │   ├── orders.json
@@ -39,4 +39,3 @@ RESTAURANT SYSTEM/
 ├── main.py               # Main application entry point
 ├── README.md             # Project documentation
 └── requirements.txt      # Project dependencies
-```
