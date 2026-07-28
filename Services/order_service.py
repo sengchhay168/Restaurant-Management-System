@@ -78,7 +78,7 @@ class OrderService:
             return self.orders
         
 
-    def generate_receipt(self, table_id):
+    def generate_receipt(self, table_id, discount_percent=0.0):
         """Prints a formatted receipt for all orders at a specific table."""
         # 1. Get all orders for this table
         orders = self.get_orders_by_table(table_id)
@@ -97,7 +97,7 @@ class OrderService:
         print(f"{'Item':<20}{'Qty':<5}{'Price':<7}{'Subtotal':<8}")
         print("-" * 40)
 
-        grand_total = 0.0
+        raw_subtotal = 0.0
 
         # 4. Loop through every item in every order
         for order in orders:
@@ -114,19 +114,26 @@ class OrderService:
                 else:
                     name = item_id  # Use the typed name (e.g., "Burger")
                     price = item.get("price", 5.00)  # Use the saved price, or $5.00 default
+
+                    item_subtotal = price * quantity
+                    raw_subtotal += item_subtotal
+
+                    print(f"{name:<20}{quantity:<5}${price:<6.2f}${item_subtotal:<7.2f}")
                 
-                subtotal = price * quantity
-                grand_total += subtotal
-                print(f"{name:<20}{quantity:<5}${price:<6.2f}${subtotal:<7.2f}")
-
-        # 5. Print the grand total footer (outside the loops!)
-        print("-" * 40)
-        print(f"{'GRAND TOTAL:':<32}${grand_total:<7.2f}")
-        print("=" * 40)
-
-        # 6. Pause screen
-        input("\n{Press Enter to Go back to the main Menu}: ")
-
+            subtotal = price * quantity
+            discount_amount = subtotal * (discount_percent / 100)
+            tax = (subtotal - discount_amount) * 0.05
+            grand_total = (subtotal - discount_amount) + tax
+            
+            print("-" * 40)
+            print(f"{'Subtotal:':<30}${raw_subtotal:>7.2f}")
+            if discount_percent > 0:
+                print(f"{f'Discount ({discount_percent}%):':<30}-${discount_amount:>7.2f}")
+            print(f"{'Tax (5%):':<30}+${tax:>7.2f}")
+            print("=" * 40)
+            print(f"{'GRAND TOTAL:':<30}${grand_total:>7.2f}")
+            print("=" * 40)
+        
     def update_order_status(self, order_id, new_status):
             """Updates the status of an existing order and saves to JSON."""
             for order in self.orders:

@@ -4,5 +4,11 @@
         "username": "Chin Sengchhay",
         "password": "168168",
         "role": "admin"
+    },
+    {
+        "user_id": "USER2",
+        "username": "Staff1",
+        "password": "268268",
+        "role": "staff"
     }
 ]

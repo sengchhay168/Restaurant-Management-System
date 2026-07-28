@@ -71,3 +71,8 @@ class AuthService:
             self.current_user = None
         else:
             print("No user is currently logged in.")
+
+    def get_current_role(self) :
+        if self.current_user:
+            return self.current_user.role.lower()
+        return None

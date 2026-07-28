@@ -85,7 +85,15 @@ def run_order_menu(order_svc, menu_svc):
                     if not table_id:
                         print("❌ Table ID cannot be empty!")
                     else:
-                        order_svc.generate_receipt(table_id)
+                        try:
+                            discount_input = input("Enter discount percentage (0-100) [default 0]: ").strip()
+                            discount = float(discount_input) if discount_input else 0.0
+                            if discount < 0 or discount > 100:
+                                print("❌ Discount must be between 0 and 100!")
+                            else:
+                                order_svc.generate_receipt(table_id, discount)
+                        except ValueError:
+                            print("❌ Invalid discount! Must be a number.")
 
             case "4":
                 all_orders = order_svc.get_all_orders()

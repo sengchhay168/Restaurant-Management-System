@@ -144,7 +144,11 @@ def main():
                     run_order_menu(order_svc, menu_svc)
 
                 case "7":
-                    run_menu_management(menu_svc)
+                    if auth_svc.get_current_role() != "admin" :
+                        print("❌ Access Denied! Only admins can access Menu Management.")
+                        input(f"\n{CYAN}Press Enter to continue...{RESET}")
+                    else :
+                        run_menu_management(menu_svc)
                     
                 case "8":
                     auth_svc.logout()
