@@ -24,5 +24,38 @@
         ],
         "status": "pending",
         "total_price": 20.0
+    },
+    {
+        "order_id": "ORDER3",
+        "table_id": "TABLE2",
+        "items": [
+            {
+                "item_id": "ITEM1",
+                "quantity": 4,
+                "price": 5.0
+            },
+            {
+                "item_id": "ITEM2",
+                "quantity": 4,
+                "price": 5.0
+            },
+            {
+                "item_id": "ITEM3",
+                "quantity": 4,
+                "price": 2.0
+            },
+            {
+                "item_id": "ITEM4",
+                "quantity": 4,
+                "price": 2.0
+            },
+            {
+                "item_id": "ITEM5",
+                "quantity": 4,
+                "price": 0.5
+            }
+        ],
+        "status": "Ready",
+        "total_price": 58.0
     }
 ]
