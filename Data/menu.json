@@ -28,5 +28,11 @@
         "name": "Pizza",
         "category": "Food",
         "price": 5.0
+    },
+    {
+        "item_id": "ITEM6",
+        "name": "Sandwitch",
+        "category": "Food",
+        "price": 1.5
     }
 ]
