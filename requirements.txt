@@ -1,2 +1,2 @@
-# Restaurant Management System
-# Built using Python Standard Library (no external dependencies required)
+streamlit>=1.30.0
+pandas>=2.0.0
