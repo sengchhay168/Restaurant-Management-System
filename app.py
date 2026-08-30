@@ -12,16 +12,16 @@ st.set_page_config(page_title="Restaurant Management System", layout="wide")
 theme = st.sidebar.selectbox("🎨 Theme Mode", ["Dark", "Light"], key="theme_mode")
 
 if theme == "Light":
-    bg_color = "#ffffff"
-    sidebar_bg = "#f0f2f6"
-    card_bg = "#ffffff"
-    text_color = "#262730"
-    border_color = "#cccccc"
+    bg_color = "#fbf9f6"       # Soft warm off-white/cream background
+    sidebar_bg = "#f4f0eb"     # Warm beige sidebar
+    card_bg = "#ffffff"        # Crisp white cards
+    text_color = "#2b2521"     # Deep warm charcoal text for readability
+    border_color = "#e8e1d7"   # Subtle warm border
     input_bg = "#ffffff"
-    input_text = "#262730"
-    clock_bg = "#f4f6f9"
-    btn_bg = "#f0f2f6"
-    btn_text = "#262730"
+    input_text = "#2b2521"
+    clock_bg = "#f4f0eb"
+    btn_bg = "#ffffff"
+    btn_text = "#2b2521"
 else:
     bg_color = "#0e1117"
     sidebar_bg = "#161b22"
@@ -40,6 +40,15 @@ st.markdown(f"""
         background-color: {bg_color} !important;
         color: {text_color} !important;
     }}
+    /* 🟢 ADD THESE TWO BLOCKS TO REMOVE THE TOP BLACK BAR */
+    header[data-testid="stHeader"] {{
+        background-color: {bg_color} !important;
+    }}
+    div[data-testid="stDecoration"] {{
+        background-color: {bg_color} !important;
+        background-image: none !important;
+    }}
+    
     section[data-testid="stSidebar"] {{
         background-color: {sidebar_bg} !important;
     }}
@@ -74,6 +83,7 @@ st.markdown(f"""
     }}
     </style>
 """, unsafe_allow_html=True)
+
 
 # Live Ticking Digital Clock in the Sidebar
 st.sidebar.markdown("### 🕒 Live System Time")
