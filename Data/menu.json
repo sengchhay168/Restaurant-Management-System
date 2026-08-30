@@ -40,5 +40,71 @@
         "name": "Ice Cream",
         "category": "Dessert ",
         "price": 0.5
+    },
+    {
+        "item_id": "M01",
+        "name": "Cheeseburger",
+        "category": "Food",
+        "price": 6.5
+    },
+    {
+        "item_id": "M02",
+        "name": "Crispy Chicken Sandwich",
+        "category": "Food",
+        "price": 7.0
+    },
+    {
+        "item_id": "M03",
+        "name": "BBQ Bacon Burger",
+        "category": "Food",
+        "price": 8.0
+    },
+    {
+        "item_id": "M04",
+        "name": "Spicy Beef Ramen",
+        "category": "Noodles",
+        "price": 9.0
+    },
+    {
+        "item_id": "M05",
+        "name": "Garlic Butter Noodles",
+        "category": "Noodles",
+        "price": 6.0
+    },
+    {
+        "item_id": "M056",
+        "name": "Japanese noodle Udon",
+        "category": "Noodles",
+        "price": 5.0
+    },
+    {
+        "item_id": "M07",
+        "name": "Iced Lemon Tea",
+        "category": "Drinks",
+        "price": 2.5
+    },
+    {
+        "item_id": "M08",
+        "name": "Fresh Mango Smoothie",
+        "category": "Drinks",
+        "price": 4.0
+    },
+    {
+        "item_id": "M09",
+        "name": "Classic Cola",
+        "category": "Drinks",
+        "price": 2.0
+    },
+    {
+        "item_id": "M10",
+        "name": "Chocolate Lava Cake",
+        "category": "Dessert",
+        "price": 5.0
+    },
+    {
+        "item_id": "M11",
+        "name": "Matcha Ice Cream",
+        "category": "Dessert",
+        "price": 3.5
     }
 ]

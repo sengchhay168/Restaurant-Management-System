@@ -231,8 +231,39 @@ else:
         "Active Orders & Receipts"
     ])
 
+
     with tab_pos:
         st.title("Point of Sale")
+
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #ff4b2b, #ff416c); padding: 20px; border-radius: 15px; color: white; margin-bottom: 20px;">
+            <h2>🔥 TODAY'S SPECIAL FOOD MENU</h2>
+            <p>Get 50% OFF on all burgers and combo sets this weekend only! Free delivery on orders over $20.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if "selected_cat" not in st.session_state:
+            st.session_state.selected_cat = "All"
+            
+        st.subheader("What's on Your Mind?")
+        
+        categories = {
+            "All": "🌐 All",
+            "Drinks": "🍹 Drinks",
+            "Food": "🍔 Food",
+            "Dessert": "🍰 Dessert",
+            "Noodles": "🍜 Noodles"
+        }
+        
+        cat_cols = st.columns(len(categories))
+
+        for i, (cat_key, cat_label) in enumerate(categories.items()):
+            with cat_cols[i]:
+                if st.button(cat_label, use_container_width=True, key=f"pos_filter_cat_{cat_key}"):
+                    st.session_state.selected_cat = cat_key
+                    st.rerun()
+                    
+        st.write(f"Filtering by: **{st.session_state.selected_cat}**")
         
         avail_tables = tables.tables
         table_options = {t.table_id: f"Table {t.table_id} (Capacity: {t.capacity}, Occupied: {t.is_occupied})" for t in avail_tables}
@@ -241,23 +272,46 @@ else:
             selected_table_id = st.selectbox("Select Table", list(table_options.keys()), format_func=lambda x: table_options[x], key="pos_table")
             
             st.subheader("Add Items to Order")
-            all_menu_items = menu.get_all_items()
             
-            if all_menu_items:
-                item_options = {item.item_id: f"{item.name} - ${item.price:.2f} ({item.category})" for item in all_menu_items}
+            # 1. Search text input bar
+            search_query = st.text_input("🔍 Search Menu Items", "", key="pos_search_query")
+            
+            all_menu_items = menu.get_all_items()
+            current_cat = st.session_state.get("selected_cat", "All")
+            
+            # 2. Filter by category buttons
+            if current_cat == "All":
+                items = all_menu_items
+            else:
+                cat_lower = current_cat.lower()
+                items = [
+                    item for item in all_menu_items 
+                    if cat_lower in getattr(item, 'category', '').lower() 
+                    or cat_lower.rstrip('s') in getattr(item, 'category', '').lower()
+                ]
+
+            # 3. Filter further if a search term is typed
+            if search_query:
+                items = [item for item in items if search_query.lower() in item.name.lower()]
+
+            if not items:
+                st.warning("No menu items found matching your search or filter.")
+            else:
+                item_options = {item.item_id: f"{item.name} - ${item.price:.2f} ({item.category})" for item in items}
                 
                 if "cart" not in st.session_state:
                     st.session_state.cart = []
                     
                 col1, col2 = st.columns(2)
                 with col1:
-                    chosen_item_id = st.selectbox("Menu Item", list(item_options.keys()), format_func=lambda x: item_options[x], key="pos_item")
+                    chosen_item_id = st.selectbox("Menu Item", list(item_options.keys()), format_func=lambda x: item_options[x], key=f"pos_item_{current_cat}_{search_query}")
                 with col2:
-                    qty = st.number_input("Quantity", min_value=1, value=1, step=1, key="pos_qty")
-                    
+                    qty = st.number_input("Quantity", min_value=1, value=1, step=1, key=f"pos_qty_{current_cat}_{search_query}")
+                
                 if st.button("Add to Cart", key="pos_add_cart"):
                     st.session_state.cart.append({"item_id": chosen_item_id, "quantity": qty})
                     st.success("Added item to cart!")
+                    st.rerun()
                     
                 if st.session_state.cart:
                     st.subheader("Cart Items")
@@ -283,8 +337,8 @@ else:
                     if st.button("Clear Cart", key="pos_clear"):
                         st.session_state.cart = []
                         st.rerun()
-            else:
-                st.warning("No menu items available. Add items in Menu Management first.")
+                    else:
+                        st.warning("No menu items available. Add items in Menu Management first.")
         else:
             st.warning("No tables found. Add tables in Table Management first.")
 
@@ -372,9 +426,34 @@ else:
     with tab_orders:
         st.title("Active Orders & Receipts")
         
-        all_ords = orders.get_all_orders()
-        if all_ords:
-            for o in all_ords:
+        st.subheader("Live Order Tracking")
+        all_orders = orders.get_all_orders()
+        
+        # Filter for active orders that aren't completed or cancelled
+        active_orders = [o for o in all_orders if getattr(o, 'status', 'Pending') not in ["Completed", "Cancelled"]]
+
+        if not active_orders:
+            st.info("No active orders right now.")
+        else:
+            for o in active_orders:
+                status = getattr(o, 'status', 'Pending')
+                with st.expander(f"Order #{o.order_id} - Table {o.table_id} ({status})"):
+                    steps = ["Pending", "Preparing", "Ready", "Completed"]
+                    current_index = steps.index(status) if status in steps else 0
+                    
+                    st.progress((current_index + 1) / len(steps))
+                    st.write(f"Current Stage: **{status}**")
+                    
+                    if st.button("Advance Status", key=f"adv_{o.order_id}"):
+                        next_status = steps[current_index + 1] if current_index < len(steps) - 1 else "Completed"
+                        orders.update_order_status(o.order_id, next_status)
+                        st.rerun()
+
+        st.markdown("---")
+        st.subheader("All Order History & Status Updates")
+        
+        if all_orders:
+            for o in all_orders:
                 st.write("---")
                 st.write(f"**Order ID:** {o.order_id} | **Table ID:** {o.table_id} | **Status:** {getattr(o, 'status', 'Pending')}")
                 st.write(f"**Total:** ${o.total_price:.2f}")
