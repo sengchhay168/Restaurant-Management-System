@@ -146,3 +146,13 @@ class OrderService:
                     self._save_orders()  
                     return True
             return False
+
+    def delete_orders_by_table(self, table_id):
+        """Deletes all orders associated with a specific table after payment."""
+        initial_count = len(self.orders)
+        self.orders = [o for o in self.orders if str(o.table_id).strip().lower() != str(table_id).strip().lower()]
+
+        if len(self.orders) < initial_count:
+            self._save_orders()
+            return True
+        return False
