@@ -6,10 +6,41 @@ from Services.order_service import OrderService
 import pandas as pd
 import streamlit.components.v1 as components
 
+# Theme Switcher in Sidebar
+theme = st.sidebar.selectbox("🎨 Theme Mode", ["Dark", "Light"], key="theme_mode")
+
+# Define color palettes based on selection
+if theme == "Light":
+    bg_color = "#ffffff"
+    card_bg = "#f4f6f9"
+    text_color = "#262730"
+    border_color = "#e0e0e0"
+else:
+    bg_color = "#0e1117"
+    card_bg = "#161b22"
+    text_color = "#f0f2f6"
+    border_color = "#30363d"
+
+# Apply dynamic theme styling
+st.markdown(f"""
+    <style>
+    .stApp {{
+        background-color: {bg_color};
+        color: {text_color};
+    }}
+    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {{
+        background-color: {card_bg};
+        border: 1px solid {border_color};
+        color: {text_color};
+    }}
+    h1, h2, h3, h4, h5, h6, p, span {{
+        color: {text_color} !important;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
 st.set_page_config(page_title="Restaurant Management System", layout="wide")
 
-import streamlit as st
-import pandas as pd
 
 st.set_page_config(page_title="Restaurant Management System", layout="wide")
 
