@@ -55,13 +55,12 @@ class AuthService:
         return self.save_users()
 
     def login_user(self, username, password):
-        """Logs in a user by verifying username and password."""
+        clean_user = username.strip() if username else ""
+        clean_pass = password.strip() if password else ""
         for u in self.users:
-            if username == u.username and password == u.password:
+            if clean_user == u.username and clean_pass == u.password:
                 self.current_user = u
-                print(f"Welcome Back! {username}.")
                 return True
-        print("Invalid Username or Password!")
         return False
     
     def logout(self):
@@ -76,3 +75,17 @@ class AuthService:
         if self.current_user:
             return self.current_user.role.lower()
         return None
+
+    def get_all_users(self):
+        if not os.path.exists(self.data_file):
+            return []
+        with open(self.data_file, "r") as f:
+            return json.load(f)
+
+    def update_user_status(self, username, status):
+        users = self.get_all_users()
+        for user in users:
+            if user.get("username") == username:
+                user["status"] = status
+        with open(self.data_file, "w") as f:
+            json.dump(users, f, indent=4)

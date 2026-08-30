@@ -3,12 +3,14 @@
         "user_id": "USER1",
         "username": "Chin Sengchhay",
         "password": "168168",
-        "role": "admin"
+        "role": "admin",
+        "status": "Offline"
     },
     {
         "user_id": "USER2",
         "username": "Staff1",
         "password": "268268",
-        "role": "staff"
+        "role": "staff",
+        "status": "Online"
     }
 ]

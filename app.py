@@ -116,6 +116,13 @@ orders = st.session_state.order_service
 
 st.sidebar.title("Restaurant System")
 
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "username" not in st.session_state:
+    st.session_state.username = ""
+if "role" not in st.session_state:
+    st.session_state.role = ""
+
 # Authentication View
 if not auth.current_user:
     # Center the login box using columns
@@ -137,7 +144,14 @@ if not auth.current_user:
                 
                 if st.button("Login", use_container_width=True):
                     if auth.login_user(username, password):
-                        st.success("Logged in successfully!")
+                        # Set native session state variables
+                        st.session_state.logged_in = True
+                        st.session_state.username = username
+                        st.session_state.role = auth.get_current_role()
+                        
+                        if hasattr(auth, 'update_user_status'):
+                            auth.update_user_status(username, "Online")
+                            
                         st.rerun()
                     else:
                         st.error("Invalid Username or Password!")
@@ -172,10 +186,32 @@ if not auth.current_user:
                         st.session_state.show_register = False
                         st.rerun()
 else:
-    st.sidebar.write(f"Logged in as: **{auth.current_user.username}** ({auth.get_current_role()})")
+    st.sidebar.write(f"Logged in as: **{st.session_state.username}** ({st.session_state.role})")
     if st.sidebar.button("Logout"):
+        if hasattr(auth, 'update_user_status'):
+            auth.update_user_status(st.session_state.username, "Offline")
         auth.logout()
+        
+        # Clear session state on logout
+        st.session_state.logged_in = False
+        st.session_state.username = ""
+        st.session_state.role = ""
         st.rerun()
+
+    # Admin User Status Monitor Dashboard
+    if st.session_state.role == "admin" and hasattr(auth, 'get_all_users'):
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("👥 User Status Monitor")
+        all_users = auth.get_all_users()
+        for u in all_users:
+            uname = u.get("username")
+            urole = u.get("role")
+            ustatus = u.get("status", "Offline")
+            if ustatus == "Online":
+                st.sidebar.markdown(f"🟢 **{uname}** (`{urole}`) — *Active*")
+            else:
+                st.sidebar.markdown(f"⚪ {uname} (`{urole}`) — *Offline*")
+
 
     # Create top-level navigation tabs instead of sidebar selectbox
     tab_pos, tab_menu, tab_table, tab_orders = st.tabs([
@@ -244,40 +280,53 @@ else:
 
     with tab_menu:
         st.title("Menu Management")
-        
-        st.subheader("Existing Menu Items")
-        items = menu.get_all_items()
+
+        is_admin = st.session_state.get("role") == "admin"
+
+        # Display the menu items for everyone to view
+        st.subheader("Current Menu Items")
+        items = menu.get_all_items()  # Assuming 'menu' is your MenuService instance
+
         if items:
             for item in items:
                 col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
                 col1.write(f"**{item.name}**")
                 col2.write(f"${item.price:.2f}")
                 col3.write(f"Category: {item.category}")
-                if col4.button("Delete", key=f"del_{item.item_id}"):
-                    menu.delete_item(item.item_id)
-                    st.success(f"Deleted {item.name}")
-                    st.rerun()
+                
+                # Only render the delete button if the user is an admin
+                if is_admin:
+                    if col4.button("Delete", key=f"del_{item.item_id}"):
+                        menu.delete_item(item.item_id)
+                        st.success(f"Deleted {item.name}")
+                        st.rerun()
         else:
             st.info("Menu is empty.")
-            
-        st.subheader("Add New Menu Item")
-        with st.form("add_menu_form"):
-            new_id = st.text_input("Item ID (e.g. M01)")
-            new_name = st.text_input("Item Name")
-            new_cat = st.text_input("Category")
-            new_price = st.number_input("Price ($)", min_value=0.0, step=0.50)
-            submit_menu = st.form_submit_button("Add Item")
-            
-            if submit_menu:
-                if new_id and new_name and new_cat and new_price > 0:
-                    res = menu.add_item(new_id, new_name, new_cat, new_price)
-                    if res:
-                        st.success(f"Successfully added {new_name}!")
-                        st.rerun()
+
+        # Admin-only section for adding new items
+        if is_admin:
+            st.markdown("---")
+            st.subheader("🛠️ Add New Menu Item")
+            with st.form("add_menu_form"):
+                new_id = st.text_input("Item ID (e.g. M01)")
+                new_name = st.text_input("Item Name")
+                new_cat = st.text_input("Category")
+                new_price = st.number_input("Price ($)", min_value=0.0, step=0.50)
+                submit_menu = st.form_submit_button("Add Item")
+                
+                if submit_menu:
+                    if new_id and new_name and new_cat and new_price > 0:
+                        res = menu.add_item(new_id, new_name, new_cat, new_price)
+                        if res:
+                            st.success(f"Successfully added {new_name}!")
+                            st.rerun()
+                        else:
+                            st.error("Duplicate item ID or failed to add.")
                     else:
-                        st.error("Duplicate item ID or failed to add.")
-                else:
-                    st.error("Please fill out all fields correctly.")
+                        st.error("Please fill out all fields correctly.")
+        else:
+            st.markdown("---")
+            st.info("🔒 Note: Adding and deleting menu items is restricted to administrators. You are viewing the menu in read-only mode.")
 
     with tab_table:
         st.title("Table Management")
