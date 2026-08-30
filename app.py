@@ -6,92 +6,89 @@ from Services.order_service import OrderService
 import pandas as pd
 import streamlit.components.v1 as components
 
-# Theme Switcher in Sidebar
+# MUST be the very first Streamlit command
+st.set_page_config(page_title="Restaurant Management System", layout="wide")
+
 theme = st.sidebar.selectbox("🎨 Theme Mode", ["Dark", "Light"], key="theme_mode")
 
-# Define color palettes based on selection
 if theme == "Light":
     bg_color = "#ffffff"
-    card_bg = "#f4f6f9"
+    sidebar_bg = "#f0f2f6"
+    card_bg = "#ffffff"
     text_color = "#262730"
-    border_color = "#e0e0e0"
+    border_color = "#cccccc"
+    input_bg = "#ffffff"
+    input_text = "#262730"
+    clock_bg = "#f4f6f9"
+    btn_bg = "#f0f2f6"
+    btn_text = "#262730"
 else:
     bg_color = "#0e1117"
+    sidebar_bg = "#161b22"
     card_bg = "#161b22"
     text_color = "#f0f2f6"
     border_color = "#30363d"
+    input_bg = "#0e1117"
+    input_text = "#f0f2f6"
+    clock_bg = "#21262d"
+    btn_bg = "#21262d"
+    btn_text = "#f0f2f6"
 
-# Apply dynamic theme styling
 st.markdown(f"""
     <style>
     .stApp {{
-        background-color: {bg_color};
-        color: {text_color};
-    }}
-    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {{
-        background-color: {card_bg};
-        border: 1px solid {border_color};
-        color: {text_color};
-    }}
-    h1, h2, h3, h4, h5, h6, p, span {{
+        background-color: {bg_color} !important;
         color: {text_color} !important;
     }}
-    </style>
-""", unsafe_allow_html=True)
-
-st.set_page_config(page_title="Restaurant Management System", layout="wide")
-
-
-st.set_page_config(page_title="Restaurant Management System", layout="wide")
-
-# Modern High-End POS Theme & Live Clock Styling
-st.markdown("""
-    <style>
-    /* Global background and card styling */
-    .stApp {
-        background-color: #0e1117;
-        color: #f0f2f6;
-    }
-    
-    /* Sleek container borders */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {
-        background-color: #161b22;
-        border: 1px solid #30363d;
+    section[data-testid="stSidebar"] {{
+        background-color: {sidebar_bg} !important;
+    }}
+    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {{
+        background-color: {card_bg} !important;
+        border: 1px solid {border_color} !important;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Glow text effect */
-    .glow-text {
-        color: #00d2ff;
-        text-shadow: 0 0 8px rgba(0, 210, 255, 0.8), 0 0 15px rgba(0, 210, 255, 0.5);
-        font-weight: 500;
-        text-align: right;
-    }
-
-    /* Metric and header adjustments */
-    h1, h2, h3 {
-        color: #ffffff;
+        color: {text_color} !important;
+    }}
+    /* Force override all Streamlit buttons and inner text */
+    button, .stButton > button, div[data-testid="stFormSubmitButton"] > button, button[data-baseweb="button"] {{
+        background-color: {btn_bg} !important;
+        color: {btn_text} !important;
+        border: 1px solid {border_color} !important;
+    }}
+    button p, .stButton > button p, div[data-testid="stFormSubmitButton"] > button p, button span, .stButton > button span {{
+        color: {btn_text} !important;
+    }}
+    input, textarea, select {{
+        background-color: {input_bg} !important;
+        color: {input_text} !important;
+        border-color: {border_color} !important;
+    }}
+    div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {{
+        background-color: {input_bg} !important;
+        color: {input_text} !important;
+    }}
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown {{
+        color: {text_color} !important;
         font-family: 'Inter', sans-serif;
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
 # Live Ticking Digital Clock in the Sidebar
 st.sidebar.markdown("### 🕒 Live System Time")
 
-clock_html = """
-<div style="background-color: #21262d; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #30363d; font-family: sans-serif;">
-    <div id="live-clock" style="font-size: 1rem; font-weight: bold; color: #00d2ff;">Loading...</div>
+clock_html = f"""
+<div style="background-color: {clock_bg}; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid {border_color}; font-family: sans-serif;">
+    <div id="live-clock" style="font-size: 1rem; font-weight: bold; color: {text_color};">Loading...</div>
 </div>
 <script>
-function updateClock() {
+function updateClock() {{
     const now = new Date();
     const timeString = now.toLocaleTimeString();
-    const dateString = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    const dateString = now.toLocaleDateString(undefined, {{ weekday: 'short', month: 'short', day: 'numeric' }});
     document.getElementById('live-clock').innerHTML = dateString + '<br>' + timeString;
-}
+}}
 setInterval(updateClock, 1000);
 updateClock();
 </script>
