@@ -337,8 +337,6 @@ else:
                     if st.button("Clear Cart", key="pos_clear"):
                         st.session_state.cart = []
                         st.rerun()
-                    else:
-                        st.warning("No menu items available. Add items in Menu Management first.")
         else:
             st.warning("No tables found. Add tables in Table Management first.")
 
