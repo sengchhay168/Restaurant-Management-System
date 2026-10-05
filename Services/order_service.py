@@ -59,10 +59,6 @@ class OrderService:
     
     def get_orders_by_table(self, table_id):
             """Returns all orders for a specific table."""
-            # Ensure self.orders is up to date (if you have a reload method, call it here)
-            if hasattr(self, 'load_orders'):
-                self.load_orders()
-
             matching_orders = []
             for o in self.orders:
                 # Check if 'o' is a dictionary or an Order object

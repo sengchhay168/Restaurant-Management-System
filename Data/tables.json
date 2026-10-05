@@ -2,11 +2,16 @@
     {
         "table_id": "TABLE1",
         "capacity": 4,
-        "is_occupied": false
+        "is_occupied": true
     },
     {
         "table_id": "TABLE2",
         "capacity": 4,
+        "is_occupied": false
+    },
+    {
+        "table_id": "TABLE3",
+        "capacity": 6,
         "is_occupied": false
     }
 ]

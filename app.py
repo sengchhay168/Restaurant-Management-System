@@ -9,88 +9,236 @@ import streamlit.components.v1 as components
 # MUST be the very first Streamlit command
 st.set_page_config(page_title="Restaurant Management System", layout="wide")
 
-theme = st.sidebar.selectbox("🎨 Theme Mode", ["Dark", "Light"], key="theme_mode")
+TAX_RATE = 0.05
 
-if theme == "Light":
-    bg_color = "#fbf9f6"       # Soft warm off-white/cream background
-    sidebar_bg = "#f4f0eb"     # Warm beige sidebar
-    card_bg = "#ffffff"        # Crisp white cards
-    text_color = "#2b2521"     # Deep warm charcoal text for readability
-    border_color = "#e8e1d7"   # Subtle warm border
-    input_bg = "#ffffff"
-    input_text = "#2b2521"
-    clock_bg = "#f4f0eb"
-    btn_bg = "#ffffff"
-    btn_text = "#2b2521"
-else:
-    bg_color = "#0e1117"
-    sidebar_bg = "#161b22"
-    card_bg = "#161b22"
-    text_color = "#f0f2f6"
-    border_color = "#30363d"
-    input_bg = "#0e1117"
-    input_text = "#f0f2f6"
-    clock_bg = "#21262d"
-    btn_bg = "#21262d"
-    btn_text = "#f0f2f6"
+
+def build_receipt(table_orders, menu_service, discount_percent):
+    """
+    Builds the itemized rows and totals for a receipt. Pulled out into one
+    shared function so the POS/Orders tab has exactly one place that
+    calculates a bill, instead of the same math being duplicated (and
+    liable to drift out of sync) in multiple button handlers.
+    """
+    raw_subtotal = 0.0
+    receipt_rows = []
+
+    for order_item in table_orders:
+        for line in order_item.items:
+            quantity = line["quantity"]
+            item_id = line["item_id"]
+            menu_item = menu_service.get_item(item_id)
+            name = menu_item.name if menu_item else item_id
+            price = menu_item.price if menu_item else line.get("price", 5.00)
+            line_subtotal = price * quantity
+            raw_subtotal += line_subtotal
+
+            receipt_rows.append({
+                "Item": name,
+                "Qty": str(quantity),
+                "Price": f"${price:.2f}",
+                "Subtotal": f"${line_subtotal:.2f}",
+            })
+
+    discount_amount = raw_subtotal * (discount_percent / 100.0)
+    taxable_amount = raw_subtotal - discount_amount
+    tax = taxable_amount * TAX_RATE
+    grand_total = taxable_amount + tax
+
+    return receipt_rows, raw_subtotal, discount_amount, tax, grand_total
+
+# The theme toggle was removed — the light palette consistently looked the
+# most polished, so the app now always uses it rather than maintaining a
+# second (less refined) dark variant.
+C = {
+    "bg": "#F6F7FA", "sidebar_bg": "#FFFFFF", "sidebar_card": "#F3F4F6",
+    "sidebar_text": "#1B212C", "sidebar_muted": "#6B7280", "sidebar_border": "rgba(27, 33, 44, 0.10)",
+    "card": "#FFFFFF", "ink": "#1B212C", "muted": "#6B7280",
+    "border": "rgba(27, 33, 44, 0.09)", "input_bg": "#FFFFFF",
+    "hover_shadow": "rgba(27, 33, 44, 0.10)",
+}
+
+# Fixed accent palette (same in both themes, so status colors stay recognizable)
+PRIMARY = "#0F766E"
+PRIMARY_DARK = "#0B5C56"
+PRIMARY_LIGHT = "#14B8A6"
+AMBER = "#D97706"
+RED = "#DC2626"
+GREEN = "#16A34A"
+BLUE = "#2563EB"
 
 st.markdown(f"""
     <style>
-    .stApp {{
-        background-color: {bg_color} !important;
-        color: {text_color} !important;
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {{
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }}
-    /* 🟢 ADD THESE TWO BLOCKS TO REMOVE THE TOP BLACK BAR */
+
+    .stApp {{
+        background-color: {C['bg']} !important;
+        color: {C['ink']} !important;
+    }}
     header[data-testid="stHeader"] {{
-        background-color: {bg_color} !important;
+        background-color: {C['bg']} !important;
     }}
     div[data-testid="stDecoration"] {{
-        background-color: {bg_color} !important;
+        background-color: {C['bg']} !important;
         background-image: none !important;
     }}
-    
     section[data-testid="stSidebar"] {{
-        background-color: {sidebar_bg} !important;
+        background-color: {C['sidebar_bg']} !important;
     }}
-    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {{
-        background-color: {card_bg} !important;
-        border: 1px solid {border_color} !important;
-        border-radius: 12px;
-        padding: 20px;
-        color: {text_color} !important;
+    section[data-testid="stSidebar"] * {{
+        color: {C['sidebar_text']} !important;
     }}
-    /* Force override all Streamlit buttons and inner text */
-    button, .stButton > button, div[data-testid="stFormSubmitButton"] > button, button[data-baseweb="button"] {{
-        background-color: {btn_bg} !important;
-        color: {btn_text} !important;
-        border: 1px solid {border_color} !important;
+
+    h1, h2, h3, h4, h5, h6 {{
+        color: {C['ink']} !important;
+        font-weight: 700 !important;
     }}
-    button p, .stButton > button p, div[data-testid="stFormSubmitButton"] > button p, button span, .stButton > button span {{
-        color: {btn_text} !important;
+    p, span, label, .stMarkdown, .stCaption {{
+        color: {C['ink']};
     }}
-    input, textarea, select {{
-        background-color: {input_bg} !important;
-        color: {input_text} !important;
-        border-color: {border_color} !important;
+
+    /* ---------- Cards ---------- */
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        background-color: {C['card']} !important;
+        border: 1px solid {C['border']} !important;
+        border-radius: 14px !important;
+        padding: 6px;
+        transition: box-shadow 0.18s ease, transform 0.18s ease;
+    }}
+    div[data-testid="stForm"] {{
+        background-color: {C['card']} !important;
+        border: 1px solid {C['border']} !important;
+        border-radius: 14px !important;
+    }}
+    .app-card {{
+        background-color: {C['card']};
+        border: 1px solid {C['border']};
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        transition: box-shadow 0.18s ease, transform 0.18s ease;
+    }}
+    .app-card:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px {C['hover_shadow']};
+    }}
+
+    /* ---------- Buttons ---------- */
+    div.stButton > button, div[data-testid="stFormSubmitButton"] > button {{
+        background-color: {PRIMARY};
+        color: #FFFFFF !important;
+        border: none;
+        border-radius: 9px;
+        font-weight: 600;
+        padding: 0.5rem 1.1rem;
+        transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }}
+    div.stButton > button:hover, div[data-testid="stFormSubmitButton"] > button:hover {{
+        background-color: {PRIMARY_DARK};
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35);
+    }}
+    div.stButton > button p, div[data-testid="stFormSubmitButton"] > button p {{
+        color: #FFFFFF !important;
+    }}
+
+    /* ---------- Tabs (pill style) ---------- */
+    [data-testid="stTabs"] [role="tablist"], [data-baseweb="tab-list"] {{
+        gap: 4px !important;
+        background-color: {C['border']} !important;
+        border-bottom: none !important;
+        border-radius: 999px !important;
+        padding: 5px !important;
+        display: inline-flex !important;
+    }}
+    [data-testid="stTabs"] [role="tab"], [data-baseweb="tab"] {{
+        font-weight: 600 !important;
+        color: {C['muted']} !important;
+        background-color: transparent !important;
+        border-radius: 999px !important;
+        padding: 8px 18px !important;
+        transition: background-color 0.18s ease, color 0.18s ease !important;
+    }}
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
+        color: #FFFFFF !important;
+        background-color: {PRIMARY} !important;
+    }}
+    [data-testid="stTabs"] [role="tab"] p {{ color: inherit !important; }}
+    [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] {{
+        display: none !important;
+    }}
+
+    /* ---------- Inputs ---------- */
+    input, textarea, .stNumberInput input {{
+        background-color: {C['input_bg']} !important;
+        color: {C['ink']} !important;
+        border-color: {C['border']} !important;
+        border-radius: 8px !important;
     }}
     div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {{
-        background-color: {input_bg} !important;
-        color: {input_text} !important;
+        background-color: {C['input_bg']} !important;
+        color: {C['ink']} !important;
+        border-radius: 8px !important;
     }}
-    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown {{
-        color: {text_color} !important;
-        font-family: 'Inter', sans-serif;
+    div[data-baseweb="select"]:focus-within > div, input:focus {{
+        border-color: {PRIMARY} !important;
+        box-shadow: 0 0 0 1px {PRIMARY} !important;
+    }}
+
+    /* ---------- Status badges ---------- */
+    .status-badge {{
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }}
+    .cat-badge {{
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background-color: {C['border']};
+        color: {C['muted']};
+    }}
+    .table-dot {{
+        display: inline-block;
+        width: 9px; height: 9px;
+        border-radius: 50%;
+        margin-right: 7px;
     }}
     </style>
 """, unsafe_allow_html=True)
+
+
+def status_badge(status):
+    """Returns a colored pill badge (as HTML) for an order status."""
+    colors = {
+        "Pending": (AMBER, "#FFF7ED"),
+        "Preparing": (BLUE, "#EFF6FF"),
+        "Ready": (PRIMARY, "#F0FDFA"),
+        "Completed": (GREEN, "#F0FDF4"),
+        "Cancelled": (RED, "#FEF2F2"),
+    }
+    fg, bg = colors.get(status, (PRIMARY, "#F0FDFA"))
+    return f'<span class="status-badge" style="color:{fg}; background-color:{bg};">{status}</span>'
+
+
+def category_badge(category):
+    return f'<span class="cat-badge">{category}</span>'
 
 
 # Live Ticking Digital Clock in the Sidebar
 st.sidebar.markdown("### 🕒 Live System Time")
 
 clock_html = f"""
-<div style="background-color: {clock_bg}; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid {border_color}; font-family: sans-serif;">
-    <div id="live-clock" style="font-size: 1rem; font-weight: bold; color: {text_color};">Loading...</div>
+<div style="background-color: {C['sidebar_card']}; padding: 12px; border-radius: 10px; text-align: center; border: 1px solid {C['sidebar_border']}; border-top: 2px solid {PRIMARY_LIGHT}; font-family: 'Plus Jakarta Sans', sans-serif;">
+    <div id="live-clock" style="font-size: 0.95rem; font-weight: 700; color: {C['sidebar_text']};">Loading...</div>
 </div>
 <script>
 function updateClock() {{
@@ -103,8 +251,14 @@ setInterval(updateClock, 1000);
 updateClock();
 </script>
 """
-components.html(clock_html, height=75)
+# NOTE: components.html() must be called *inside* a `with st.sidebar:` block
+# to actually render in the sidebar — calling it directly (as the original
+# code did) silently renders it at the top of the main page instead, which
+# is why the clock used to show up floating above the login card.
+with st.sidebar:
+    components.html(clock_html, height=75)
 st.sidebar.markdown("---")
+
 
 # Initialize services in session state to persist states across re-runs
 if "auth_service" not in st.session_state:
@@ -139,7 +293,19 @@ if not auth.current_user:
     _, center_col, _ = st.columns([1, 1.2, 1])
     
     with center_col:
-        st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Restaurant Management</h2>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="text-align:center; margin: 32px 0 24px 0;">
+                <div style="
+                    width: 56px; height: 56px; margin: 0 auto 14px auto;
+                    background: linear-gradient(135deg, {PRIMARY}, {PRIMARY_LIGHT});
+                    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+                    font-size: 26px; box-shadow: 0 8px 20px rgba(15,118,110,0.3);">
+                    🍽️
+                </div>
+                <h2 style="margin:0; font-weight:800;">Restaurant Management</h2>
+                <p style="color:{C['muted']}; margin-top:4px;">Sign in to manage orders, tables, and the menu</p>
+            </div>
+        """, unsafe_allow_html=True)
         
         # Initialize toggle state for switching between login and registration
         if "show_register" not in st.session_state:
@@ -179,15 +345,18 @@ if not auth.current_user:
                 reg_id = st.text_input("User ID", key="reg_id_input")
                 reg_user = st.text_input("New Username", key="reg_user_input")
                 reg_pass = st.text_input("New Password", type="password", key="reg_pass_input")
-                reg_role = st.selectbox("Role", ["staff", "admin"], key="reg_role_input")
-                
+                st.caption("New accounts are created as Staff. An existing admin can promote a user to Admin later.")
+
                 if st.button("Register Account", use_container_width=True):
-                    if auth.register_user(reg_id, reg_user, reg_pass, reg_role):
+                    # SECURITY: role is intentionally NOT selectable here — public
+                    # self-registration must never be able to grant admin access.
+                    # New accounts always start as "staff".
+                    if auth.register_user(reg_id, reg_user, reg_pass, role="staff"):
                         st.success("Registered successfully! Please log in.")
                         st.session_state.show_register = False
                         st.rerun()
                     else:
-                        st.error("Registration failed (ID or username may already exist).")
+                        st.error("Registration failed. Check that the ID/username are unique and the password is at least 4 characters.")
                 
                 # Back to login link on the bottom right
                 col_spacer, col_btn = st.columns([1.5, 1])
@@ -196,8 +365,16 @@ if not auth.current_user:
                         st.session_state.show_register = False
                         st.rerun()
 else:
-    st.sidebar.write(f"Logged in as: **{st.session_state.username}** ({st.session_state.role})")
-    if st.sidebar.button("Logout"):
+    role_color = PRIMARY_LIGHT if st.session_state.role == "admin" else BLUE
+    st.sidebar.markdown(f"""
+        <div style="background-color:{C['sidebar_card']}; border:1px solid {C['sidebar_border']};
+                    border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+            <div style="font-size:13px; color:{C['sidebar_muted']};">Signed in as</div>
+            <div style="font-weight:700; font-size:15px; color:{C['sidebar_text']};">{st.session_state.username}</div>
+            <span class="status-badge" style="color:{role_color}; background-color:rgba(20,184,166,0.12); margin-top:4px;">{st.session_state.role.upper()}</span>
+        </div>
+    """, unsafe_allow_html=True)
+    if st.sidebar.button("Logout", use_container_width=True):
         if hasattr(auth, 'update_user_status'):
             auth.update_user_status(st.session_state.username, "Offline")
         auth.logout()
@@ -217,10 +394,32 @@ else:
             uname = u.get("username")
             urole = u.get("role")
             ustatus = u.get("status", "Offline")
-            if ustatus == "Online":
-                st.sidebar.markdown(f"🟢 **{uname}** (`{urole}`) — *Active*")
-            else:
-                st.sidebar.markdown(f"⚪ {uname} (`{urole}`) — *Offline*")
+            dot_color = GREEN if ustatus == "Online" else "#9CA3AF"
+            weight = "700" if ustatus == "Online" else "400"
+            opacity = "1" if ustatus == "Online" else "0.65"
+            st.sidebar.markdown(
+                f'<div style="padding:4px 0; opacity:{opacity};">'
+                f'<span class="table-dot" style="background-color:{dot_color};"></span>'
+                f'<span style="font-weight:{weight}; color:{C["sidebar_text"]};">{uname}</span> '
+                f'<span style="color:{C["sidebar_muted"]}; font-size:12px;">({urole})</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            # Promote/demote — not offered for your own account, since
+            # changing your own role mid-session is more confusing than useful.
+            if uname != st.session_state.username:
+                if urole == "staff":
+                    if st.sidebar.button(f"⬆️ Promote to Admin", key=f"promote_{uname}", use_container_width=True):
+                        ok, msg = auth.set_user_role(uname, "admin")
+                        (st.sidebar.success if ok else st.sidebar.error)(msg)
+                        if ok:
+                            st.rerun()
+                elif urole == "admin":
+                    if st.sidebar.button(f"⬇️ Demote to Staff", key=f"demote_{uname}", use_container_width=True):
+                        ok, msg = auth.set_user_role(uname, "staff")
+                        (st.sidebar.success if ok else st.sidebar.error)(msg)
+                        if ok:
+                            st.rerun()
 
 
     # Create top-level navigation tabs instead of sidebar selectbox
@@ -235,10 +434,11 @@ else:
     with tab_pos:
         st.title("Point of Sale")
 
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #ff4b2b, #ff416c); padding: 20px; border-radius: 15px; color: white; margin-bottom: 20px;">
-            <h2>🔥 TODAY'S SPECIAL FOOD MENU</h2>
-            <p>Get 50% OFF on all burgers and combo sets this weekend only! Free delivery on orders over $20.</p>
+        st.markdown(f"""
+        <div style="background: linear-gradient(120deg, {PRIMARY}, {PRIMARY_LIGHT}); padding: 22px 26px; border-radius: 14px; color: white; margin-bottom: 22px; box-shadow: 0 8px 24px rgba(15,118,110,0.25);">
+            <div style="font-size:12px; font-weight:700; letter-spacing:0.5px; opacity:0.85; margin-bottom:4px;">TODAY'S PROMOTION</div>
+            <h2 style="margin:0 0 6px 0; color:white;">50% OFF All Burgers & Combo Sets</h2>
+            <p style="margin:0; opacity:0.92;">This weekend only — free delivery on orders over $20.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -263,7 +463,10 @@ else:
                     st.session_state.selected_cat = cat_key
                     st.rerun()
                     
-        st.write(f"Filtering by: **{st.session_state.selected_cat}**")
+        st.markdown(
+            f'<div style="margin-bottom:14px;">Filtering by: {category_badge(st.session_state.selected_cat)}</div>',
+            unsafe_allow_html=True,
+        )
         
         avail_tables = tables.tables
         table_options = {t.table_id: f"Table {t.table_id} (Capacity: {t.capacity}, Occupied: {t.is_occupied})" for t in avail_tables}
@@ -283,11 +486,12 @@ else:
             if current_cat == "All":
                 items = all_menu_items
             else:
-                cat_lower = current_cat.lower()
+                # Category names are now stored consistently (see Data/menu.json),
+                # so a direct case-insensitive match is enough — no more fragile
+                # substring/pluralization guessing needed here.
                 items = [
-                    item for item in all_menu_items 
-                    if cat_lower in getattr(item, 'category', '').lower() 
-                    or cat_lower.rstrip('s') in getattr(item, 'category', '').lower()
+                    item for item in all_menu_items
+                    if getattr(item, 'category', '').strip().lower() == current_cat.lower()
                 ]
 
             # 3. Filter further if a search term is typed
@@ -354,7 +558,7 @@ else:
                 col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
                 col1.write(f"**{item.name}**")
                 col2.write(f"${item.price:.2f}")
-                col3.write(f"Category: {item.category}")
+                col3.markdown(category_badge(item.category), unsafe_allow_html=True)
                 
                 # Only render the delete button if the user is an admin
                 if is_admin:
@@ -372,7 +576,11 @@ else:
             with st.form("add_menu_form"):
                 new_id = st.text_input("Item ID (e.g. M01)")
                 new_name = st.text_input("Item Name")
-                new_cat = st.text_input("Category")
+                # A fixed dropdown (matching the filter categories above) instead
+                # of free text — free text let inconsistent category names like
+                # "Drink" vs "Drinks" or trailing spaces creep into the data,
+                # which silently broke category filtering for those items.
+                new_cat = st.selectbox("Category", ["Food", "Drinks", "Dessert", "Noodles"])
                 new_price = st.number_input("Price ($)", min_value=0.0, step=0.50)
                 submit_menu = st.form_submit_button("Add Item")
                 
@@ -395,17 +603,30 @@ else:
         
         st.subheader("All Tables")
         for t in tables.tables:
-            col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+            col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])
             col1.write(f"**Table {t.table_id}**")
             col2.write(f"Capacity: {t.capacity}")
-            col3.write(f"Occupied: {'Yes' if t.is_occupied else 'No'}")
+            dot_color = RED if t.is_occupied else GREEN
+            status_label = "Occupied" if t.is_occupied else "Vacant"
+            col3.markdown(
+                f'<span class="table-dot" style="background-color:{dot_color};"></span>{status_label}',
+                unsafe_allow_html=True,
+            )
             if t.is_occupied:
-                if col4.button("Vacate", key=f"vac_{t.table_id}"):
+                col4.write("")
+                if col5.button("Vacate", key=f"vac_{t.table_id}"):
                     tables.vacate_table(t.table_id)
                     st.rerun()
             else:
-                if col4.button("Occupy", key=f"occ_{t.table_id}"):
-                    tables.occupy_table(t.table_id, t.capacity)
+                # Ask for the actual party size instead of assuming the table
+                # is always filled to full capacity — this is also what lets
+                # TableService's over-capacity check actually do anything.
+                party_size = col4.number_input(
+                    "Party size", min_value=1, max_value=t.capacity, value=min(2, t.capacity),
+                    step=1, key=f"party_{t.table_id}", label_visibility="collapsed"
+                )
+                if col5.button("Occupy", key=f"occ_{t.table_id}"):
+                    tables.occupy_table(t.table_id, party_size)
                     st.rerun()
                     
         st.subheader("Add New Table")
@@ -435,12 +656,12 @@ else:
         else:
             for o in active_orders:
                 status = getattr(o, 'status', 'Pending')
-                with st.expander(f"Order #{o.order_id} - Table {o.table_id} ({status})"):
+                with st.expander(f"Order #{o.order_id} — Table {o.table_id}"):
+                    st.markdown(status_badge(status), unsafe_allow_html=True)
                     steps = ["Pending", "Preparing", "Ready", "Completed"]
                     current_index = steps.index(status) if status in steps else 0
                     
                     st.progress((current_index + 1) / len(steps))
-                    st.write(f"Current Stage: **{status}**")
                     
                     if st.button("Advance Status", key=f"adv_{o.order_id}"):
                         next_status = steps[current_index + 1] if current_index < len(steps) - 1 else "Completed"
@@ -452,8 +673,12 @@ else:
         
         if all_orders:
             for o in all_orders:
-                st.write("---")
-                st.write(f"**Order ID:** {o.order_id} | **Table ID:** {o.table_id} | **Status:** {getattr(o, 'status', 'Pending')}")
+                st.markdown("---")
+                st.markdown(
+                    f"**Order ID:** {o.order_id} &nbsp;|&nbsp; **Table:** {o.table_id} &nbsp;|&nbsp; "
+                    f"{status_badge(getattr(o, 'status', 'Pending'))}",
+                    unsafe_allow_html=True,
+                )
                 st.write(f"**Total:** ${o.total_price:.2f}")
                 
                 new_st = st.selectbox("Update Status", ["Pending", "Preparing", "Completed", "Cancelled"], key=f"status_{o.order_id}")
@@ -467,40 +692,18 @@ else:
             discount = st.number_input("Discount Percentage (%)", min_value=0.0, max_value=100.0, step=1.0, value=0.0, key="rcpt_disc")
 
             col_gen, col_pay = st.columns(2)
-            
+
             with col_gen:
                 if st.button("Generate Receipt Printout", key="btn_gen_receipt"):
                     if receipt_table_id:
                         table_orders = orders.get_orders_by_table(receipt_table_id)
                         if table_orders:
-                            raw_sub = 0.0
-                            receipt_rows = []
-                            for ord_item in table_orders:
-                                for itm in ord_item.items:
-                                    q = itm["quantity"]
-                                    iid = itm["item_id"]
-                                    m_obj = menu.get_item(iid)
-                                    name = m_obj.name if m_obj else iid
-                                    price = m_obj.price if m_obj else itm.get("price", 5.00)
-                                    sub = price * q
-                                    raw_sub += sub
-                                    
-                                    receipt_rows.append({
-                                        "Item": name,
-                                        "Qty": str(q),
-                                        "Price": f"${price:.2f}",
-                                        "Subtotal": f"${sub:.2f}"
-                                    })
-                            
-                            disc_amt = raw_sub * (discount / 100.0)
-                            taxable = raw_sub - disc_amt
-                            tax = taxable * 0.05
-                            grand = taxable + tax
-                            
+                            receipt_rows, raw_sub, disc_amt, tax, grand = build_receipt(table_orders, menu, discount)
+
                             st.markdown("---")
                             st.markdown(f"### 🧾 RECEIPT: TABLE {receipt_table_id}")
                             st.table(pd.DataFrame(receipt_rows))
-                            
+
                             st.markdown(f"""
                             **Subtotal:** ${raw_sub:.2f}  
                             {f'**Discount ({discount}%):** -${disc_amt:.2f}' if discount > 0 else ''}
@@ -510,13 +713,13 @@ else:
                             """)
                         else:
                             st.warning(f"No active orders found for Table {receipt_table_id}.")
-                            
+
             with col_pay:
                 if st.button("Finished Paying (Clear Orders & Vacate Table)", type="primary", key="btn_finish_pay"):
                     if receipt_table_id:
                         cleared = orders.delete_orders_by_table(receipt_table_id)
                         tables.vacate_table(receipt_table_id)
-                        
+
                         if cleared:
                             st.success(f"Table {receipt_table_id} checked out successfully! Orders cleared and table vacated.")
                             st.rerun()
@@ -524,47 +727,5 @@ else:
                             st.warning(f"No active orders found to clear for Table {receipt_table_id}.")
                     else:
                         st.error("Please enter a valid Table ID.")
-
-            if st.button("Generate Receipt Printout"):
-                if receipt_table_id:
-                    table_orders = orders.get_orders_by_table(receipt_table_id)
-                    if table_orders:
-                        raw_sub = 0.0
-                        receipt_rows = []
-                        for ord_item in table_orders:
-                            for itm in ord_item.items:
-                                q = itm["quantity"]
-                                iid = itm["item_id"]
-                                m_obj = menu.get_item(iid)
-                                name = m_obj.name if m_obj else iid
-                                price = m_obj.price if m_obj else itm.get("price", 5.00)
-                                sub = price * q
-                                raw_sub += sub
-                                
-                                receipt_rows.append({
-                                    "Item": name,
-                                    "Qty": str(q),
-                                    "Price": f"${price:.2f}",
-                                    "Subtotal": f"${sub:.2f}"
-                                })
-                        
-                        disc_amt = raw_sub * (discount / 100.0)
-                        taxable = raw_sub - disc_amt
-                        tax = taxable * 0.05
-                        grand = taxable + tax
-                        
-                        st.markdown("---")
-                        st.markdown(f"### 🧾 RECEIPT: TABLE {receipt_table_id}")
-                        st.table(pd.DataFrame(receipt_rows))
-                        
-                        st.markdown(f"""
-                        **Subtotal:** ${raw_sub:.2f}  
-                        {f'**Discount ({discount}%):** -${disc_amt:.2f}' if discount > 0 else ''}
-                        **Tax (5%):** +${tax:.2f}  
-                        ___
-                        ### **GRAND TOTAL: ${grand:.2f}**
-                        """)
-                    else:
-                        st.warning(f"No active orders found for Table {receipt_table_id}.")
         else:
             st.info("No orders placed yet.")

@@ -8,13 +8,13 @@
     {
         "item_id": "ITEM3",
         "name": "Coca Cola",
-        "category": "Drink",
+        "category": "Drinks",
         "price": 2.0
     },
     {
         "item_id": "ITEM5",
         "name": "Juice",
-        "category": "Drink",
+        "category": "Drinks",
         "price": 0.5
     },
     {
@@ -31,14 +31,14 @@
     },
     {
         "item_id": "ITEM6",
-        "name": "Sandwitch",
+        "name": "Sandwich",
         "category": "Food",
         "price": 1.5
     },
     {
         "item_id": "ITEM7",
         "name": "Ice Cream",
-        "category": "Dessert ",
+        "category": "Dessert",
         "price": 0.5
     },
     {

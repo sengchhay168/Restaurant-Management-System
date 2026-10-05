@@ -5,6 +5,7 @@ import streamlit as st
 class FileHandler:
 
     # Hidden static method to store raw file contents in fast memory cache
+    @staticmethod
     @st.cache_data
     def _cached_read(file_path):
         with open(file_path, "r", encoding='utf-8') as file:
@@ -36,8 +37,10 @@ class FileHandler:
             with open(file_path, "w", encoding='utf-8') as file:
                 json.dump(data, file, indent=4)
             
-            # CRITICAL: Wipe out old cached data so the next read fetches fresh data
-            st.cache_data.clear()
+            # Wipe only this function's cached entries, not every cached
+            # value in the whole app (st.cache_data.clear() with no target
+            # clears everything, which gets wasteful as the app grows).
+            FileHandler._cached_read.clear()
             return True
             
         except Exception as e:
