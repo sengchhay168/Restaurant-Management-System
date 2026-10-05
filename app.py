@@ -656,8 +656,11 @@ else:
         else:
             for o in active_orders:
                 status = getattr(o, 'status', 'Pending')
-                with st.expander(f"Order #{o.order_id} — Table {o.table_id}"):
-                    st.markdown(status_badge(status), unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown(
+                        f"**Order #{o.order_id}** — Table {o.table_id} &nbsp; {status_badge(status)}",
+                        unsafe_allow_html=True,
+                    )
                     steps = ["Pending", "Preparing", "Ready", "Completed"]
                     current_index = steps.index(status) if status in steps else 0
                     
